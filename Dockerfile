@@ -1,13 +1,13 @@
-# 使用 Alpine 基础镜像
-FROM alpine:latest
+# 改用 Debian 基础镜像（更稳定的包管理）
+FROM debian:bookworm-slim
 
-# 关键修复：替换为国内镜像源（阿里云）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 安装基础工具（apt 国内源默认已加速）
+RUN apt-get update && apt-get install -y \
+    bash \
+    coreutils \
+    && rm -rf /var/lib/apt/lists/*
 
-# 安装必要工具（合并更新与安装步骤）
-RUN apk update && apk add --no-cache bash coreutils
-
-# 复制所有文件到镜像（用于测试 secret leakage）
+# 复制所有文件到镜像（保留完整测试环境）
 COPY . /app
 
 # 设置工作目录
