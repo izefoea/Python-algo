@@ -9,3 +9,23 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Job1 Task
+        run: echo "Job1 正在运行..."
+
+  job2:
+    needs: job1    # 指定 job2 依赖 job1 完成后再执行
+    runs-on: self-hosted
+    steps:
+      - name: Job2-print
+        run: echo "Job2 正在运行..."
+      - name: Job2-sleep
+        run: sleep 30
+
+  job3:
+    needs: job1    # 同样指定 job3 依赖 job1 完成后再执行
+    runs-on: self-hosted
+    steps:
+      - name: Job3-print
+        run: echo "Job3 正在运行..."
+      - name: Job3-sleep
+        run: sleep 30
