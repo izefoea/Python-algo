@@ -1,4 +1,4 @@
-name: Secret and Artifact Leakage Test
+name: multi-workflow
 
 on:
   workflow_dispatch:
