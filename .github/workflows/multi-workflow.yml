@@ -1,0 +1,11 @@
+name: Secret and Artifact Leakage Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-cache:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
