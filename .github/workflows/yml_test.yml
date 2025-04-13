@@ -8,4 +8,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: test
-        run: echo "hello ${{ github.actor }}"
+        run: |
+          echo "hello ${{ github.actor }}"
+          sleep 30
