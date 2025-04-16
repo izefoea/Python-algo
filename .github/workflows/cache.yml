@@ -2,6 +2,7 @@ name: "cache"
 
 on:
   workflow_dispatch:
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -17,7 +18,10 @@ jobs:
 
       - name: Generate Prime Numbers
         if: steps.cache-primes.outputs.cache-hit != 'true'
-        run: ./generate-primes.sh -d prime-numbers
+        run: |
+          # 确保目录存在，然后写入当前日期时间到 prime.txt 文件
+          mkdir -p prime-numbers
+          echo "Generated at $(date)" > prime-numbers/prime.txt
 
       - name: Cache Numbers
         id: cache-numbers
@@ -28,7 +32,10 @@ jobs:
 
       - name: Generate Numbers
         if: steps.cache-numbers.outputs.cache-hit != 'true'
-        run: ./generate-primes.sh -d numbers
+        run: |
+          # 创建目录，并写入一个数字到 number.txt 文件
+          mkdir -p numbers
+          echo "42" > numbers/number.txt
 
   build-windows:
     runs-on: windows-latest
@@ -44,4 +51,7 @@ jobs:
 
       - name: Generate Prime Numbers
         if: steps.cache-primes.outputs.cache-hit != 'true'
-        run: ./generate-primes -d prime-numbers
+        run: |
+          # 在 Windows 下使用 PowerShell 创建目录并写入当前日期到文件
+          New-Item -ItemType Directory -Force -Path prime-numbers
+          "Generated at $(Get-Date)" | Out-File -FilePath prime-numbers\prime.txt
