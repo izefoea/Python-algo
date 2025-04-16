@@ -1,0 +1,27 @@
+name: "Read Cache and Print Contents"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  read-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore prime-numbers cache
+        id: cache-primes
+        uses: actions/cache@v4
+        with:
+          path: prime-numbers
+          key: primes
+
+      - name: Print the content of prime.txt
+        run: |
+          if [ -f prime-numbers/prime.txt ]; then
+            echo "Content of prime-numbers/prime.txt:"
+            cat prime-numbers/prime.txt
+          else
+            echo "prime-numbers/prime.txt does not exist."
+          fi
