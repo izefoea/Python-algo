@@ -1,0 +1,47 @@
+name: "cache"
+
+on:
+  workflow_dispatch:
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Primes
+        id: cache-primes
+        uses: actions/cache@v4
+        with:
+          path: prime-numbers
+          key: primes
+
+      - name: Generate Prime Numbers
+        if: steps.cache-primes.outputs.cache-hit != 'true'
+        run: ./generate-primes.sh -d prime-numbers
+
+      - name: Cache Numbers
+        id: cache-numbers
+        uses: actions/cache@v4
+        with:
+          path: numbers
+          key: primes
+
+      - name: Generate Numbers
+        if: steps.cache-numbers.outputs.cache-hit != 'true'
+        run: ./generate-primes.sh -d numbers
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Primes
+        id: cache-primes
+        uses: actions/cache@v4
+        with:
+          path: prime-numbers
+          key: primes
+
+      - name: Generate Prime Numbers
+        if: steps.cache-primes.outputs.cache-hit != 'true'
+        run: ./generate-primes -d prime-numbers
