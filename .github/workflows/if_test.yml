@@ -35,7 +35,7 @@ jobs:
 
       # Always upload logs, even if tests fail or are skipped
       - name: Upload logs
-        if: ${{ always() }}
+        if: ${{ ls -l }}
         run: echo "Uploading build logs..."
 
   deploy:
