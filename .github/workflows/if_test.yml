@@ -1,0 +1,53 @@
+name: If‑and‑Needs Example
+
+# Trigger on both pushes and PRs
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    # ─────────── Server‑side job IF ───────────
+    # Only queue 'build' when on 'main' branch
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ───────── Runner‑side step IF ─────────
+      # Only run tests when the actor is 'octocat'
+      - id: run-tests
+        name: Run tests
+        run: npm test
+        if: github.actor == 'octocat'
+
+      # Always upload logs, even if tests fail or are skipped
+      - name: Upload logs
+        if: ${{ always() }}
+        run: echo "Uploading build logs..."
+
+  deploy:
+    # ─────────── Job dependency (needs) ───────────
+    needs: build
+    # Server‑side IF: only deploy when 'build' succeeded
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Runner‑side step IF: only on push events (not PRs)
+      - name: Deploy to Production
+        run: echo "Deploying to production environment..."
+        if: github.event_name == 'push'
