@@ -2,15 +2,14 @@ name: If‑and‑Needs Example
 
 # Trigger on both pushes and PRs
 on:
-  push:
-  pull_request:
+  workflow_dispatch
 
 jobs:
   build:
     # ─────────── Server‑side job IF ───────────
     # Only queue 'build' when on 'main' branch
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
@@ -41,7 +40,7 @@ jobs:
     needs: build
     # Server‑side IF: only deploy when 'build' succeeded
     if: needs.build.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
