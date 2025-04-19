@@ -4,6 +4,10 @@ name: If‑and‑Needs Example
 on:
   workflow_dispatch:
 
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
+
 jobs:
   build:
     # ─────────── Server‑side job IF ───────────
