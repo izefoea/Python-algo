@@ -34,9 +34,6 @@ jobs:
         if: github.actor == 'octocat'
 
       # Always upload logs, even if tests fail or are skipped
-      - name: Upload logs
-        if: exec('ls -l')
-        run: echo "Uploading build logs..."
 
   deploy:
     # ─────────── Job dependency (needs) ───────────
@@ -53,3 +50,40 @@ jobs:
       - name: Deploy to Production
         run: echo "Deploying to production environment..."
         if: github.event_name == 'push'
+
+  test:
+    runs-on: self-hosted
+    outputs:
+      raw-json: ${{ steps.set-json.outputs.json_data }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set JSON with embedded command
+        id: set-json
+        run: |
+          # Use single quotes around the whole string so inner quotes and colons are safe
+          echo 'json_data={"cmd": "echo \"hello\""}' >> $GITHUB_OUTPUT
+
+      - name: Inspect raw output
+        run: |
+          echo "Raw json_data output:"
+          echo "${{ steps.set-json.outputs.json_data }}"
+
+      - name: toJSON of entire outputs
+        run: |
+          echo "toJSON output: ${{ toJSON(steps.set-json.outputs) }}"
+
+      - name: fromJSON parse the cmd field
+        run: |
+          # fromJSON returns an object, but does NOT execute the cmd value
+          PARSED_CMD=${{ fromJSON(steps.set-json.outputs.json_data).cmd }}
+          echo "Parsed cmd field: $PARSED_CMD"
+
+      - name: Verify no command execution
+        run: |
+          echo "If 'hello' appears below, command was executed (it should NOT):"
+          echo "Result:"
+          # Note: we are NOT running $PARSED_CMD here—just echoing it
+          echo "${{ fromJSON(steps.set-json.outputs.json_data).cmd }}"
