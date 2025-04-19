@@ -2,7 +2,7 @@ name: If‑and‑Needs Example
 
 # Trigger on both pushes and PRs
 on:
-  workflow_dispatch
+  workflow_dispatch:
 
 jobs:
   build:
