@@ -1,0 +1,16 @@
+name: Test PR Behavior
+
+on:
+  pull_request:
+
+jobs:
+  test-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Run script
+        run: |
+          chmod +x ./run.sh
+          ./run.sh
