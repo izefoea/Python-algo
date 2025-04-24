@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "✅ This is the original script from BASE repo."
+echo "🚨 This is a MALICIOUS script from FORK repo!"
