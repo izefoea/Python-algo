@@ -1,0 +1,91 @@
+name: Test Custom YAML Tag Support
+
+on: [push, workflow_dispatch] # 可以通过 push 触发，也可以手动触发
+
+jobs:
+
+  # Job 1: 测试 Python 特有标签 (PyYAML 等)
+  # 预期结果：高概率失败，因为这些标签不属于标准 YAML，且涉及潜在安全风险
+  test-python-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!python tags
+        run: echo "Attempting to use !!python/object/..."
+        env:
+          # 将 Python 特有标签结构放入环境变量的值中
+          # GitHub Actions 解析 workflow 文件时会处理这里的 YAML
+          PYTHON_PROBE: |
+            # 使用一个 PyYAML 特有的反序列化标签作为探针
+            my_python_object: !!python/object/apply:os.system ["echo 'This command should NOT run'"]
+            # 或者你之前提到的 CVE 相关的标签
+            # malicious_payload: !!python/object/new:type
+            #   args: ["z", !!python/tuple [], {"extend": !!python/name:exec }]
+            #   listitems: "RCE_HERE"
+
+  # Job 2: 测试 Java 特有标签 (SnakeYAML 等)
+  # 预期结果：高概率失败，原因同上
+  test-java-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!java tags
+        run: echo "Attempting to use !!java/object/..."
+        env:
+          # 将 Java 特有标签结构放入环境变量的值中
+          JAVA_PROBE: |
+            # 使用一个 SnakeYAML 特有的标签作为探针
+            my_java_object: !!java/object:java.util.ArrayList []
+
+  # Job 3: 测试 Ruby 特有标签 (Psych 等)
+  # 预期结果：高概率失败
+  test-ruby-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!ruby tags
+        run: echo "Attempting to use !!ruby/object/..."
+        env:
+          # 将 Ruby 特有标签结构放入环境变量的值中
+          RUBY_PROBE: |
+            # 使用一个 Ruby 特有的标签作为探针
+            my_ruby_object: !!ruby/object:DateTime
+              ivars:
+                :@ajd: 2459655 # 示例值
+
+  # Job 4: 测试 Go 特有标签 (go-yaml 等)
+  # 注意：Go 的 yaml 库可能不常用 !!go/object 这种形式，更多是处理结构体标签
+  # 但我们可以尝试一个不太标准的自定义标签，看它如何反应
+  # 预期结果：高概率失败，因为 !!go/object 这种不属于标准或广泛支持的标签
+  test-go-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!go/object tag
+        run: echo "Attempting to use !!go/object/..."
+        env:
+          # 尝试一个假设的 Go 特有标签
+          GO_PROBE: |
+            my_go_object: !!go/object:main.MyStruct { Field: "value" }
+
+  # Job 5: 测试一个完全自定义的未知标签
+  # 预期结果：高概率失败，因为这是解析器完全不认识的
+  test-custom-unknown-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!mycustom/tag
+        run: echo "Attempting to use a completely unknown tag..."
+        env:
+          CUSTOM_PROBE: |
+            # 一个完全编造的标签
+            some_value: !!mycustom/tag arbitrary data
+
+  # Job 6: 测试一个不太常见的标准标签 (!!set)
+  # 预期结果：可能成功，也可能失败，取决于解析器对标准规范的支持程度
+  test-standard-set-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe for !!set tag
+        run: echo "Attempting to use !!set tag..."
+        env:
+          SET_PROBE: |
+            my_set_data: !!set
+              ? item1
+              ? item2
+              ? item1 # Set应该自动去重
