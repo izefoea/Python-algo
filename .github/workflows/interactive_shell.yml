@@ -1,0 +1,39 @@
+# .github/workflows/interactive_shell.yml
+name: Interactive Runner Shell via tmate
+
+on:
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  debug_runner_shell:
+    runs-on: ubuntu-latest # 您可以根据需要更改为 windows-latest 或 macos-latest
+    timeout-minutes: 60 # 设置作业的整体超时时间，tmate 会话将在此时间内有效
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # (可选步骤) 预安装一些您可能想在 shell 中立即使用的工具
+      - name: Install common tools (e.g., tree, htop, ncdu)
+        if: runner.os == 'Linux' # 仅在 Linux runner 上执行
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tree htop ncdu vim mc
+          echo "Common tools installed."
+      # 对于 Windows, 您可以使用 Chocolatey:
+      # - name: Install common tools (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: choco install tree mc # 示例工具
+      # 对于 macOS, 您可以使用 Homebrew:
+      # - name: Install common tools (macOS)
+      #   if: runner.os == 'macOS'
+      #   run: brew install tree mc # 示例工具
+
+      - name: Setup tmate session for interactive debugging
+        uses: mxschmitt/action-tmate@v3
+        with:
+          # limit-access-to-actor: true # (推荐) 仅允许触发此 workflow 的用户连接
+          # sudo: false # 如果您不需要在 tmate 会话中无密码 sudo，可以设置为 false
+          # install-dependencies: true # 确保 tmate 的依赖已安装
+          # timeout-minutes: 15 # (可选) 设置 tmate 会话本身的超时时间（分钟）
+                                # 如果不设置，将依赖于 job 的 timeout-minutes
