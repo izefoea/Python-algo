@@ -32,8 +32,7 @@ jobs:
       - name: Setup tmate session for interactive debugging
         uses: mxschmitt/action-tmate@v3
         with:
-          # limit-access-to-actor: true # (推荐) 仅允许触发此 workflow 的用户连接
-          # sudo: false # 如果您不需要在 tmate 会话中无密码 sudo，可以设置为 false
-          # install-dependencies: true # 确保 tmate 的依赖已安装
-          # timeout-minutes: 15 # (可选) 设置 tmate 会话本身的超时时间（分钟）
-                                # 如果不设置，将依赖于 job 的 timeout-minutes
+          limit-access-to-actor: true # (推荐) 仅允许触发此 workflow 的用户连接
+          sudo: false # 如果您不需要在 tmate 会话中无密码 sudo，可以设置为 false
+          install-dependencies: true # 确保 tmate 的依赖已安装
+          timeout-minutes: 15 # (可选) 设置 tmate 会话本身的超时时间（分钟）
