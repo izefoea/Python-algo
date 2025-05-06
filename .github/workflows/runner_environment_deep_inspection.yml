@@ -1,0 +1,136 @@
+# .github/workflows/runner_environment_deep_inspection.yml
+name: Runner Environment Deep Inspection
+
+on:
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  inspect_runner_environment:
+    runs-on: ubuntu-latest # 您可以更改为其他runner，如 windows-latest 或 macos-latest 来对比环境
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # 检出代码，为文件系统路径提供上下文
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tree procps coreutils # procps 包含 ps, coreutils 包含 hostnamectl 等
+        # 对于 Windows runner, 您可能需要使用 Chocolatey 或 winget 来安装类似工具
+        # 对于 macOS runner, 您可能需要使用 Homebrew
+
+      - name: Gather Runner Environment Information
+        id: gather_info
+        run: |
+          # 定义唯一的输出文件名
+          OUTFILE="runner_inspection_report_$(date +%Y%m%d_%H%M%S).txt"
+          echo "Report generated on: $(date)" > $OUTFILE
+          echo "Runner OS: ${{ runner.os }}" >> $OUTFILE
+          echo "Runner Arch: ${{ runner.arch }}" >> $OUTFILE
+          echo "Runner Name: ${{ runner.name }}" >> $OUTFILE
+          echo "GitHub Workspace: $GITHUB_WORKSPACE" >> $OUTFILE
+          echo "Home Directory: $HOME" >> $OUTFILE
+
+          echo_section_header() {
+            echo -e "\n\n=== $1 ===" >> $OUTFILE
+          }
+
+          # --- 基本用户信息 ---
+          echo_section_header "Current User and ID"
+          { whoami; id; } >> $OUTFILE 2>&1 || echo "Failed to get user info" >> $OUTFILE
+
+          # --- 文件系统信息 ---
+          echo_section_header "File System Information"
+          echo "[pwd - Current Directory]" >> $OUTFILE
+          pwd >> $OUTFILE 2>&1
+
+          echo "[ls -la . (Current Directory: $GITHUB_WORKSPACE)]" >> $OUTFILE
+          ls -la . >> $OUTFILE 2>&1
+
+          echo "[ls -la ../ (Parent of GITHUB_WORKSPACE: $(dirname $GITHUB_WORKSPACE))]" >> $OUTFILE
+          ls -la ../ >> $OUTFILE 2>&1 || echo "Failed to list ../" >> $OUTFILE
+
+          echo "[ls -la ../../ (Grandparent of GITHUB_WORKSPACE)]" >> $OUTFILE
+          ls -la ../../ >> $OUTFILE 2>&1 || echo "Failed to list ../../" >> $OUTFILE
+
+          echo "[ls -la /home/runner/work (Common work directory for runners)]" >> $OUTFILE
+          ls -la /home/runner/work >> $OUTFILE 2>&1 || echo "Failed to list /home/runner/work" >> $OUTFILE
+          
+          echo "[ls -la /home/runner (Runner's home)]" >> $OUTFILE
+          ls -la /home/runner >> $OUTFILE 2>&1 || echo "Failed to list /home/runner" >> $OUTFILE
+
+          echo "[tree -L 2 $GITHUB_WORKSPACE (Current Workspace Structure, Depth 2)]" >> $OUTFILE
+          tree -L 2 $GITHUB_WORKSPACE >> $OUTFILE 2>&1 || echo "tree command failed or not installed for $GITHUB_WORKSPACE" >> $OUTFILE
+
+          echo "[tree -L 1 $(dirname $GITHUB_WORKSPACE) (Parent of Workspace Structure, Depth 1)]" >> $OUTFILE
+          tree -L 1 $(dirname $GITHUB_WORKSPACE) >> $OUTFILE 2>&1 || echo "tree command failed or not installed for $(dirname $GITHUB_WORKSPACE)" >> $OUTFILE
+          
+          echo "[tree -L 2 /home/runner/work (Common work directory structure, Depth 2)]" >> $OUTFILE
+          tree -L 2 /home/runner/work >> $OUTFILE 2>&1 || echo "tree command failed or not installed for /home/runner/work" >> $OUTFILE
+
+          echo "[df -h (Disk Filesystem Usage)]" >> $OUTFILE
+          df -h >> $OUTFILE 2>&1
+
+          echo "[mount (Mounted Filesystems)]" >> $OUTFILE
+          mount >> $OUTFILE 2>&1
+
+          # --- 容器/VM 检测信息 ---
+          echo_section_header "Container/VM Detection Information"
+          echo "[Checking for /.dockerenv]" >> $OUTFILE
+          if [ -f /.dockerenv ]; then echo "/.dockerenv exists"; else echo "/.dockerenv not found"; fi >> $OUTFILE 2>&1
+
+          echo "[cat /proc/1/cgroup (Control Group for init process)]" >> $OUTFILE
+          cat /proc/1/cgroup >> $OUTFILE 2>&1 || echo "Failed to read /proc/1/cgroup" >> $OUTFILE
+
+          echo "[cat /proc/self/cgroup (Control Group for current process)]" >> $OUTFILE
+          cat /proc/self/cgroup >> $OUTFILE 2>&1 || echo "Failed to read /proc/self/cgroup" >> $OUTFILE
+          
+          echo "[cat /proc/1/sched (Scheduling information for init process - first 5 lines)]" >> $OUTFILE
+          head -n 5 /proc/1/sched >> $OUTFILE 2>&1 || echo "Failed to read /proc/1/sched" >> $OUTFILE
+          
+          echo "[ls -l /proc/1/ns (Namespaces of init process)]" >> $OUTFILE
+          ls -l /proc/1/ns >> $OUTFILE 2>&1 || echo "Failed to list /proc/1/ns" >> $OUTFILE
+
+          echo "[systemd-detect-virt (Detect Virtualization)]" >> $OUTFILE
+          systemd-detect-virt -v >> $OUTFILE 2>&1 || echo "systemd-detect-virt not found or failed" >> $OUTFILE
+
+          echo "[docker info (Docker Daemon Information)]" >> $OUTFILE
+          docker info >> $OUTFILE 2>&1 || echo "docker info command failed (docker not available, permission denied, or daemon not running)" >> $OUTFILE
+          
+          echo "[hostnamectl status (Hostname Information)]" >> $OUTFILE
+          hostnamectl status >> $OUTFILE 2>&1 || echo "hostnamectl not found or failed" >> $OUTFILE
+          
+          echo "[cat /proc/self/status (Process Status - checking for Virt/VxID)]" >> $OUTFILE
+          cat /proc/self/status | grep -E '^(Virt|VxID|NSpid|NSpgid|NSTgid)' >> $OUTFILE 2>&1 || echo "Virt/VxID/NS* not found in /proc/self/status or grep failed" >> $OUTFILE
+
+          echo_section_header "Environment Variables (Sorted)"
+          env | sort >> $OUTFILE 2>&1
+
+          echo_section_header "Process List (ps auxef)"
+          ps auxef >> $OUTFILE 2>&1 || echo "ps command failed" >> $OUTFILE
+          
+          echo_section_header "Loaded Kernel Modules (lsmod)"
+          lsmod >> $OUTFILE 2>&1 || echo "lsmod command not found or failed" >> $OUTFILE
+
+          echo_section_header "Network Interfaces (ip a)"
+          ip a >> $OUTFILE 2>&1 || echo "ip command not found or failed" >> $OUTFILE
+
+          echo_section_header "CPU Information (cat /proc/cpuinfo - first 20 lines)"
+          head -n 20 /proc/cpuinfo >> $OUTFILE 2>&1 || echo "Failed to read /proc/cpuinfo" >> $OUTFILE
+
+          echo_section_header "Memory Information (cat /proc/meminfo - first 20 lines)"
+          head -n 20 /proc/meminfo >> $OUTFILE 2>&1 || echo "Failed to read /proc/meminfo" >> $OUTFILE
+          
+          echo -e "\n\n--- End of Report ---" >> $OUTFILE
+
+          echo -e "\n\nPreview of the report ($OUTFILE):\n"
+          cat $OUTFILE
+          
+          # 使 OUTFILE 的名称可用于后续步骤
+          echo "outfile_name=$OUTFILE" >> $GITHUB_OUTPUT
+
+
+      - name: Upload inspection report
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-inspection-report # Artifact 存档名称
+          path: ${{ steps.gather_info.outputs.outfile_name }} # 上传特定文件
