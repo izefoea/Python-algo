@@ -9,7 +9,6 @@ on:
       - reopened
 
 permissions:
-  # 只读内容即可，足够上传 artifact
   contents: read
 
 jobs:
