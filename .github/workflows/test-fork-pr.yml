@@ -1,0 +1,39 @@
+name: 测试 Fork 中新增 Workflow 是否马上执行
+
+# 只在 PR 提交到 base 仓库时触发
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  proof_execution:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 打印 GitHub 运行上下文
+        run: |
+          echo "工作流名称：${{ github.workflow }}"
+          echo "事件类型：${{ github.event_name }}"
+          echo "PR 来源仓库：${{ github.event.pull_request.head.repo.full_name }}"
+          echo "PR 来源分支：${{ github.event.pull_request.head.ref }}"
+
+      - name: 列出 .github/workflows 目录
+        run: |
+          echo "当前工作区下的 workflows："
+          ls -R .github/workflows
+
+      - name: 生成执行凭证文件
+        run: |
+          echo "✅ Workflow 在 $(date) 被执行" > proof-of-execution.txt
+
+      - name: 上传执行凭证（artifact）
+        uses: actions/upload-artifact@v3
+        with:
+          name: proof-of-execution
+          path: proof-of-execution.txt
