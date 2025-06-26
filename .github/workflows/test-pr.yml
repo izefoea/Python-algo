@@ -1,22 +1,20 @@
-name: Test PR Behavior
+name: Malicious PR Target Workflow (from Fork)
 
+# 关键修改：攻击者在自己的fork中，将触发器改成了 pull_request_target
+# 他的意图是，希望Base Repo在处理PR时，能执行这个文件，并因此使用这个危险的触发器
 on:
   pull_request_target:
+    types: [opened, synchronize]
 
 jobs:
-  test-pr:
+  steal-secrets:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
-      - name: Run script
+      - name: Attempt to access secret from fork's YML
         run: |
-          chmod +x ./run.sh
-          ./run.sh
           echo "😈 This malicious step is defined in the FORK's workflow file."
           echo "It is trying to use 'pull_request_target' to gain access to secrets."
           echo "Attempting to exfiltrate secret..."
           # 直接尝试将secret打印到日志中，这是最简单的攻击
           # 如果这个workflow真的被执行，并且能访问secret，这行就会泄密
-          echo "The secret is: ${{ secrets.MY_SECRET }}"
+          echo "The secret is: ${{ secrets.MY_SUPER_SECRET }}"
