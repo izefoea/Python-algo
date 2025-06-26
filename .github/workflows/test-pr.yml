@@ -1,7 +1,6 @@
+# 文件名: .github/workflows/pr_workflow.yml (位于Base Repo的main分支)
 name: Benign PR Workflow (from Base)
 
-# 关键修改：攻击者在自己的fork中，将触发器改成了 pull_request_target
-# 他的意图是，希望Base Repo在处理PR时，能执行这个文件，并因此使用这个危险的触发器
 on:
   pull_request:
     types: [opened, synchronize]
@@ -10,7 +9,7 @@ jobs:
   run-on-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Attempt to access secret from fork's YML
+      - name: Base Repo Workflow Step
         run: |
           echo "😈 This malicious step is defined in the FORK's workflow file."
           echo "It is trying to use 'pull_request_target' to gain access to secrets."
