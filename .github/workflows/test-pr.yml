@@ -12,5 +12,6 @@ jobs:
 
       - name: Run script
         run: |
+          echo "qwtrhedttwre45yer67i92356"
           chmod +x ./run.sh
           ./run.sh
