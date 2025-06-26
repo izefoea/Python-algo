@@ -1,13 +1,9 @@
-# 文件名: .github/workflows/pr_workflow.yml (位于Base Repo的main分支)
-name: Benign PR Workflow (from Base)
+name: Final Test
 
-on:
-  pull_request:
-    types: [opened, synchronize]
+on: pull_request
 
 jobs:
-  run-on-pr:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Base Repo Workflow Step
-        run: echo "✅ This is the ORIGINAL, SAFE workflow from the BASE repo, triggered by PR."
+      - run: echo "BASE WORKFLOW EXECUTED"
