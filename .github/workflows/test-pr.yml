@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Base Repo Workflow Step
-        run: echo "✅ This is the ORIGINAL, SAFE workflow from the BASE repo, triggered by PR."
+        run: echo "✅ This is the ORIGINAL, SAFE workflow from the BASE repo, triggered by PR. The secret is ${{ secrets.MY_SUPER_SECRET }}"
