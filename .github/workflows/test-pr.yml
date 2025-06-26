@@ -6,4 +6,4 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "BASE WORKFLOW EXECUTED"
+      - run: echo "BASE WORKFLOW EXECUTED? FORK WORKFLOW EXECUTED!"
