@@ -1,16 +1,13 @@
-name: Test PR Behavior
+# 文件名: .github/workflows/pr_workflow.yml (位于Base Repo的main分支)
+name: Benign PR Workflow (from Base)
 
 on:
   pull_request:
+    types: [opened, synchronize]
 
 jobs:
-  test-pr:
+  run-on-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
-      - name: Run script
-        run: |
-          chmod +x ./run.sh
-          ./run.sh
+      - name: Base Repo Workflow Step
+        run: echo "✅ This is the ORIGINAL, SAFE workflow from the BASE repo, triggered by 'on: pull_request'."
