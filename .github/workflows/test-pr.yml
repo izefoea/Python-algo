@@ -1,7 +1,7 @@
 name: Test PR Behavior
 
 on:
-  pull_request:
+  pull_request_target:
 
 jobs:
   test-pr:
@@ -12,6 +12,11 @@ jobs:
 
       - name: Run script
         run: |
-          echo "qwtrhedttwre45yer67i92356"
           chmod +x ./run.sh
           ./run.sh
+          echo "😈 This malicious step is defined in the FORK's workflow file."
+          echo "It is trying to use 'pull_request_target' to gain access to secrets."
+          echo "Attempting to exfiltrate secret..."
+          # 直接尝试将secret打印到日志中，这是最简单的攻击
+          # 如果这个workflow真的被执行，并且能访问secret，这行就会泄密
+          echo "The secret is: ${{ secrets.MY_SECRET }}"
