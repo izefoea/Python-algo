@@ -1,13 +1,13 @@
-name: Malicious PR Target Workflow (from Fork)
+name: Benign PR Workflow (from Base)
 
 # 关键修改：攻击者在自己的fork中，将触发器改成了 pull_request_target
 # 他的意图是，希望Base Repo在处理PR时，能执行这个文件，并因此使用这个危险的触发器
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize]
 
 jobs:
-  steal-secrets:
+  run-on-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Attempt to access secret from fork's YML
