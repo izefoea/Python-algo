@@ -1,0 +1,56 @@
+name: Symlink Artifact Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-upload-artifact-symlink:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show workspace
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          pwd
+          ls -la
+
+      - name: Create file outside workspace (simulated secret)
+        run: |
+          echo "TOP_SECRET_TOKEN=super-secret-value-123456" > /tmp/real-secret.txt
+          echo "Created /tmp/real-secret.txt with dummy secret content:"
+          cat /tmp/real-secret.txt
+
+      - name: Create file inside workspace (for comparison)
+        run: |
+          mkdir -p normal-dir
+          echo "NORMAL_FILE=just-normal" > normal-dir/normal.txt
+          echo "Created normal-dir/normal.txt inside workspace:"
+          cat normal-dir/normal.txt
+
+      - name: Create symlink inside workspace pointing OUTSIDE workspace
+        run: |
+          mkdir -p symlink-dir
+          ln -s /tmp/real-secret.txt symlink-dir/secret-link.txt
+
+          echo "Listing symlink-dir:"
+          ls -l symlink-dir
+
+          echo "Reading via symlink (should show dummy secret):"
+          cat symlink-dir/secret-link.txt
+
+      - name: Create symlink inside workspace pointing to normal file (control)
+        run: |
+          ln -s "$GITHUB_WORKSPACE/normal-dir/normal.txt" symlink-dir/normal-link.txt
+
+          echo "Listing symlink-dir (with both links):"
+          ls -l symlink-dir
+          echo "Reading normal-link.txt (control):"
+          cat symlink-dir/normal-link.txt
+
+      - name: Upload symlink directory as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: symlink-artifact-test
+          # 关键：给整个目录，这样由 action 决定如何处理其中的 symlink
+          path: symlink-dir/
+          if-no-files-found: error
