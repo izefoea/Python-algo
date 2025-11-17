@@ -1,0 +1,23 @@
+name: injection-poc
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+jobs:
+  poc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: getdiff
+        name: Get diff (POC)
+        uses: technote-space/get-diff-action@v6.1.2
+        with:
+          GET_FILE_DIFF: true
+
+      - name: Show outputs
+        if: always()
+        shell: cmd
+        run: |
+          echo GIT_DIFF=%GIT_DIFF%
+          echo LINES=%LINES%
