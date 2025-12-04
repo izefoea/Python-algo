@@ -1,18 +1,62 @@
-name: "Publish Immutable Action Version"
+name: Masking Lab (base64 + debug)
 
 on:
   workflow_dispatch:
 
 jobs:
-  publish:
+  ubuntu:
+    name: ubuntu-latest (bash + github-script)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
+    env:
+      SECRET: ${{ secrets.DB_PASSWORD }}
     steps:
-    - name: Check out repo
-      uses: actions/checkout@v4
-    - name: Publish
-      id: publish
-      uses: actions/publish-immutable-action@v0.0.3
+      - name: Baseline (echo)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "raw=$SECRET"
+          echo "raw_with_affixes=prefix-$SECRET-suffix"
+
+          B64="$(printf '%s' "$SECRET" | base64 -w0)"
+          echo "b64=$B64"
+          echo "b64_with_affixes=prefix-$B64-suffix"
+
+          B64_NOPAD="$(printf '%s' "$B64" | tr -d '=')"
+          echo "b64_nopad=$B64_NOPAD"
+
+          B64X2="$(printf '%s' "$SECRET" | base64 -w0 | base64 -w0)"
+          echo "b64x2=$B64X2"
+
+      - name: Debug channel (::debug::)
+        shell: bash
+        run: |
+          set -euo pipefail
+          B64="$(printf '%s' "$SECRET" | base64 -w0)"
+          B64X2="$(printf '%s' "$SECRET" | base64 -w0 | base64 -w0)"
+          echo "::debug::raw=$SECRET"
+          echo "::debug::b64=$B64"
+          echo "::debug::b64x2=$B64X2"
+        # 需要 ACTIONS_STEP_DEBUG=true 才能看到这些 debug 行
+        # 见 GitHub 文档
+        # (无需在 workflow 里显式设置，repo secret/variable 即可)
+
+      - name: core.debug vs core.info (actions/github-script)
+        uses: actions/github-script@v8
+        env:
+          SECRET: ${{ secrets.MASK_TEST_SECRET }}
+        with:
+          script: |
+            const raw = process.env.SECRET;
+            const b64 = Buffer.from(raw, 'utf8').toString('base64');
+            const b64x2 = Buffer.from(b64, 'utf8').toString('base64');
+
+            // debug 级别：需要 ACTIONS_STEP_DEBUG=true 才会出现在日志里
+            core.debug(`core.debug raw=${raw}`);
+            core.debug(`core.debug b64=${b64}`);
+            core.debug(`core.debug b64x2=${b64x2}`);
+
+            // info 级别：默认就会出现在日志里
+            core.info(`core.info raw=${raw}`);
+            core.info(`core.info b64=${b64}`);
+            core.info(`core.info b64x2=${b64x2}`);
